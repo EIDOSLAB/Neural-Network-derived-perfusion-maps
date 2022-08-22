@@ -1,6 +1,6 @@
 # Neural network derived perfusion maps
 
-This repository contains the source code for getting started on [UniToBrain](https://ieee-dataport.org/open-access/unitobrain) dataset by using [pyEDDL](https://github.com/deephealthproject/pyeddl)/[pyECVL](https://github.com/deephealthproject/pyecvl)
+This repository contains the source code for the paper [Neural Network-derived perfusion maps: a Model-free approach to computed tomography perfusion in patients with acute ischemic stroke](https://arxiv.org/pdf/2101.05992.pdf). The dataset is publicly available at the following [link](https://ieee-dataport.org/open-access/unitobrain).
 
 # Requirements
 * numpy
