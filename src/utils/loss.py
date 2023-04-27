@@ -32,3 +32,14 @@ def focal(input, target):
 	invprobs = F.logsigmoid(-input * (target * 2.0 - 1.0))
 	loss = (invprobs * gamma).exp() * loss
 	return loss.mean()
+
+
+def weighted_L1(input, target):
+	_, i, c = torch.unique(input, return_counts=True, return_inverse=True)
+	w = 1/c[i]
+	return torch.mean(torch.abs(input-target)*w)
+
+def weighted_MSE(gt, output):
+	_, i, c = torch.unique(gt.cpu(), return_counts=True, return_inverse=True)
+	w = (100/c[i]).cuda()
+	return torch.mean(torch.sqrt((gt-output**2))*w)

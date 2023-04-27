@@ -16,7 +16,6 @@ class DiceCoeff(Function):
         t = (2 * self.inter.float() + eps) / self.union.float()
         return t
 
-
 def dice_coeff(input, target):
     """Dice coeff for batches"""
     if input.is_cuda:
@@ -47,7 +46,6 @@ def dice_loss(pred, target):
 
     return 1 - ((2. * intersection + smooth) / (A_sum + B_sum + smooth) )
 
-
 def polarize(img):
     ''' Polarize the value to zero and one
     Args:
@@ -63,9 +61,8 @@ def mkdir(path):
 	if not os.path.exists(path):
 		os.makedirs(path)
 
-
-def accuracy_check(mask, prediction):
-    ims = [mask, prediction]
+def accuracy_check(map, prediction):
+    ims = [map, prediction]
     np_ims = []
     for item in ims:
         if 'str' in str(type(item)):
@@ -81,10 +78,10 @@ def accuracy_check(mask, prediction):
 
     return accuracy/len(np_ims[0].flatten())
 
-def accuracy_check_for_batch(masks, predictions, batch_size):
+def accuracy_check_for_batch(maps, predictions, batch_size):
     total_acc = 0
     for index in range(batch_size):
-        total_acc += accuracy_check(masks[index], predictions[index])
+        total_acc += accuracy_check(maps[index], predictions[index])
     return total_acc/batch_size
 
 def get_loss(model, train_loader, loss_criterion, device):
@@ -120,9 +117,9 @@ def eval_net(net, dataset, device):
 		target = target.to(device)
 
 		torch.cuda.empty_cache()
-		mask_pred = net(data)
-		mask_pred = (mask_pred > 0.5).float()
+		map_pred = net(data)
+		map_pred = (map_pred > 0.5).float()
 
-		tot += dice_loss(mask_pred, target).item()
+		tot += dice_loss(map_pred, target).item()
 
 	return tot / (batch_idx + 1)
