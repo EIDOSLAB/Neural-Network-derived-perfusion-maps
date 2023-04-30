@@ -26,7 +26,7 @@ parser.add_argument('--checkpoint_dir', help='best model', type=str, default="sr
 parser.add_argument('--out_maps_dir', help='outoputs maps dir', type=str, default="src/output_maps")
 parser.add_argument('--batch_size', help='Batch size (default: 8)', type=int, default=8)
 parser.add_argument('--device', help='Pytorch device', type=str, default="cuda")
-parser.add_argument('--data_path', help='Path of images and maps', type=str, default="/DeepHealth_IEEE")
+parser.add_argument('--data_path', help='Path of images and maps', type=str, default="DeepHealth_IEEE")
 parser.add_argument('--map_type', help='Type of map/output', type=str, default="NLR_CBV")
 parser.add_argument('--val_split', help='% val split', type=float, default=0.1)
 parser.add_argument('--test_split', help='% test split', type=float, default=0.1)
@@ -92,7 +92,6 @@ def main(rank, args):
 
 	mse_tot = []
 	psnr_tot = []
-
 
 	for map_type in ["NLR_TTP"]: #, "NLR_CBV"]: #, "NLR_MTT", "NLR_TTP", "NLR_Delay"]: # , "NLR_CBV", 
 		

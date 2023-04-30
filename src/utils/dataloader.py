@@ -41,7 +41,7 @@ class BrainDataset(Dataset):
 		data = get_metadata(self)
 
 		# split data based on type of map, and number of patient for train/val/test
-		images_list, maps_list, patients_list = split_data_cv(
+		self.images_list, self.maps_list, self.patients_list = split_data_cv(
 			(
 				data["images"], 
 				data["maps"][self.map_type], 
@@ -55,21 +55,22 @@ class BrainDataset(Dataset):
 		# import images (volumes) and maps from dicom. 
 		self.images, self.maps, self.patients = get_imgs_maps(
 			self,
-			images_list, 
-			maps_list, 
-			patients_list, 
+			self.images_list, 
+			self.maps_list, 
+			self.patients_list, 
 			im_size
 		)
-
-		# standardization of volumes with mean and var; normalization of maps btw 0 and 1
-		self.images = standardization(self.images) #standardization
-		self.maps = normalization(self.maps) #standardization
-		self.patients = patients_list
 
 
 	def __getitem__(self, index): # RETURN ONE ITEM ON THE INDEX
 		#self.images[index] = remove_noise(self.images[index])
-		return self.images[index], self.maps[index], self.patients[index]
+		# standardization of volumes with mean and var; normalization of maps btw 0 and 1
+		this_img = torch.load(self.images[index])
+		this_mp = torch.load(self.maps[index])
+		this_img = standardization(this_img) #standardization
+		this_img = normalization(this_img) #standardization
+
+		return this_img, this_mp, self.patients[index]
 
 	def __len__(self): # RETURN THE DATA LENGTH
 		return len(self.images)

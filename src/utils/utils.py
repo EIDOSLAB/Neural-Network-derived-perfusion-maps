@@ -252,6 +252,20 @@ def plt_map(args, target, output, typ, pat, epoch, k, fold):
         )
     plt.close(f)
 
+def get_single_imgs_maps(
+    self, imgs, mps, pat, im_size
+    ):
+    '''
+    This function read metadata and create images and mapss for each patient according to their 
+    height and instant. The funtion loads image/map as torch tensor or create it.
+    '''
+    img = torch.load(os.path.join(img_dir, f"{pat}_{k}.pt"))
+    mp = torch.load(os.path.join(mp_dir, f"{pat}_{k}.pt"))
+    
+
+            
+    return torch.cat(img_list), torch.cat(mp_list), pat_list
+
 def get_imgs_maps(
     self, imgs_list, mps_list, patients, im_size
     ):
@@ -285,7 +299,7 @@ def get_imgs_maps(
             k+=1
 
         if os.path.exists(os.path.join(img_dir, f"{pat}_{k}.pt")) and os.path.exists(os.path.join(mp_dir, f"{pat}_{k}.pt")):
-            img = torch.load(os.path.join(img_dir, f"{pat}_{k}.pt"))
+            #img = torch.load(os.path.join(img_dir, f"{pat}_{k}.pt"))
             mp = torch.load(os.path.join(mp_dir, f"{pat}_{k}.pt"))
 
 
@@ -294,36 +308,15 @@ def get_imgs_maps(
                     #continue
             if torch.std(mp)==0 or torch.max(mp)==0:
                     continue
-            '''
-            # NOTE: use the following code if you want to create volume with shapes [sections, time, height, width]
-        
-            #if k<7:
-            #    img_pat.append(img.unsqueeze(0))
-            #    mp_pat.append(mp.unsqueeze(0))
-            
-            #elif k==7:
-            #    img_pat.append(img.unsqueeze(0))
-            #    mp_pat.append(mp.unsqueeze(0))
-
-            #    img_list.append(torch.cat(img_pat).unsqueeze(0))
-            #    mp_list.append(torch.cat(mp_pat).unsqueeze(0))
-            #    pat_list.append(pat)
-            
-            #    print(
-            #        f"Images and maps (loaded): {round((n+1)/len(imgs_list)*100, 2)}% total: {(n+1)}/{len(imgs_list)}"
-            #        )
-            #     continue
-            '''
            
-            img_list.append(img.unsqueeze(0))
-            mp_list.append(mp.unsqueeze(0))
+            img_list.append(os.path.join(img_dir, f"{pat}_{k}.pt"))#(img.unsqueeze(0))
+            mp_list.append(os.path.join(mp_dir, f"{pat}_{k}.pt"))#(mp.unsqueeze(0))
             pat_list.append(pat)
             print(
                     f"Images and maps (loaded): {round((n+1)/len(imgs_list)*100, 2)}% total: {(n+1)}/{len(imgs_list)}"
                     )
 
         else:
-            img = create_tensor(im_pth, im_size)
             mp = create_tensor(mk_pth, im_size)
 
             # we cheack if an image or a map (or both) is empty
@@ -331,6 +324,8 @@ def get_imgs_maps(
                 #continue
             if torch.std(mp)==0 or torch.max(mp)==0:
                     continue
+            
+            img = create_tensor(im_pth, im_size)
 
             torch.save(img, os.path.join(img_dir, f"{pat}_{k}.pt"))
             torch.save(mp, os.path.join(mp_dir, f"{pat}_{k}.pt"))
@@ -353,14 +348,14 @@ def get_imgs_maps(
                     f"Image and maps (created): {round((n+1)/len(imgs_list)*100, 2)}% total: {(n+1)}/{len(imgs_list)}"
                     )
             '''
-            img_list.append(img.unsqueeze(0))
-            mp_list.append(mp.unsqueeze(0))
+            img_list.append(os.path.join(img_dir, f"{pat}_{k}.pt"))#(img.unsqueeze(0))
+            mp_list.append(os.path.join(mp_dir, f"{pat}_{k}.pt"))#(mp.unsqueeze(0))
             pat_list.append(pat)
             print(
                     f"Images and maps (created): {round((n+1)/len(imgs_list)*100, 2)}% total: {(n+1)}/{len(imgs_list)}"
                     )
             
-    return torch.cat(img_list), torch.cat(mp_list), pat_list
+    return img_list, mp_list, pat_list#torch.cat(img_list), torch.cat(mp_list), pat_list
 
 def dump_paths(self):
 
