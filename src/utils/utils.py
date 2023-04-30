@@ -164,7 +164,7 @@ def split_data(_list, split_type, val_split, test_split):
     return _img, _map, _pat
 
 
-def split_data_cv(_list, split_type, val_split, test_split, k):
+def split_data_cv(_list, split_type, val_split, k):
     '''
     This function allows us to divide patients so that they are not simultaneously present 
     in the train-test-val dataset. It returns the patient code, the volume and the map (the 
@@ -176,16 +176,12 @@ def split_data_cv(_list, split_type, val_split, test_split, k):
     images, maps, patients = _list
     unique_list = list(set(patients))
     unique_list.sort()
-    #random.shuffle(unique_list)
 
-    tot_pat = len(unique_list)
+    tot_pat = len(unique_list)-14
     val_split = int(math.trunc(tot_pat*val_split))
-    test_split = int(math.trunc(tot_pat*test_split))
-    train_split = tot_pat-val_split-test_split
+    train_split = tot_pat-val_split
 
     if not split_type=='test':
-        #pat_considered = unique_list[:train_split+val_split]
-
         test_patients = [
             "MOL-001",  "MOL-002",  "MOL-003",  "MOL-004",  "MOL-005", 
             "MOL-059",  "MOL-141",  "MOL-142",  "MOL-163",  "MOL-164",
@@ -210,7 +206,6 @@ def split_data_cv(_list, split_type, val_split, test_split, k):
             "MOL-059",  "MOL-141",  "MOL-142",  "MOL-163",  "MOL-164",
             "MOL-175",  "MOL-190",  "MOL-207",  "MOL-260"
         ]
-        #unique_list[train_split+val_split:]
     
     print(f'-num of patients {split_type} set {len(pat_considered)}/{tot_pat}')
 
@@ -267,14 +262,14 @@ def get_single_imgs_maps(
     return torch.cat(img_list), torch.cat(mp_list), pat_list
 
 def get_imgs_maps(
-    self, imgs_list, mps_list, patients, im_size
+    imgs_list, mps_list, patients, im_size, img_directory, map_type
     ):
     '''
     This function read metadata and create images and mapss for each patient according to their 
     height and instant. The funtion loads image/map as torch tensor or create it.
     '''
 
-    img_dir, mp_dir = dump_paths(self)
+    img_dir, mp_dir = dump_paths(img_directory, map_type)
 
     img_list = []
     mp_list = []
@@ -357,10 +352,10 @@ def get_imgs_maps(
             
     return img_list, mp_list, pat_list#torch.cat(img_list), torch.cat(mp_list), pat_list
 
-def dump_paths(self):
+def dump_paths(img_directory, map_type):
 
-    img_dump = os.path.join(self.img_directory, "dump", f"images")
-    mp_dump = os.path.join(self.img_directory, "dump", f"maps", self.map_type) #_{im_size}
+    img_dump = os.path.join(img_directory, "dump", f"images")
+    mp_dump = os.path.join(img_directory, "dump", f"maps", map_type) #_{im_size}
 
     for d in [img_dump, mp_dump]:
         if not os.path.exists(d):
@@ -368,17 +363,17 @@ def dump_paths(self):
 
     return img_dump, mp_dump
 
-def get_metadata(self):
+def get_metadata(img_directory):
     
 	if not os.path.exists(
-		os.path.join(self.img_directory, "metadata", "unito-brain-metadata.json")
+		os.path.join(img_directory, "metadata", "unito-brain-metadata.json")
 	):
-		data = create_metadata(self.img_directory)
+		data = create_metadata(img_directory)
 	else:
 		print("Metadata found. Loading dataset...")
 		with open(
 			os.path.join(
-				self.img_directory,"metadata", "unito-brain-metadata.json")
+				img_directory,"metadata", "unito-brain-metadata.json")
 			) as json_file:
 			data = json.load(json_file)
 	return data

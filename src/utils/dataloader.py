@@ -9,81 +9,120 @@ torch.manual_seed(42)
 
 
 # customized Data loader
-class BrainDataset(Dataset):
-	def __init__(
-		self, 
+def BrainDataset(
 		img_directory, 
 		map_type, 
 		num_channels, 
 		im_size, 
 		resize_dim,
-		dataset_type, 
-		val_test_split, 
-		k_folds,
-		transformations=None
+		val_split, 
+		k_folds
 		): #READ DATA
 
-		super(BrainDataset, self).__init__()
-		self.img_directory = img_directory
-		self.num_channels = num_channels
-		self.transformations = transformations
-		self.map_type = map_type
-		self.im_size = im_size
-		self.resize_dim = resize_dim
-		self.dataset_type = dataset_type
-		self.val_split, self.test_split = val_test_split
-		
-		self.k_folds = k_folds
-
-		self.geom_transform = geom_transform(self)
-
 		# load or generate metadata from DeepHealth_IEEE
-		data = get_metadata(self)
+		data = get_metadata(img_directory)
 
 		# split data based on type of map, and number of patient for train/val/test
-		self.images_list, self.maps_list, self.patients_list = split_data_cv(
+		images_list, maps_list, patients_list = split_data_cv(
 			(
 				data["images"], 
-				data["maps"][self.map_type], 
+				data["maps"][map_type], 
 				data["patients"]), 
-			self.dataset_type,
-			self.val_split,
-			self.test_split,
-			self.k_folds
+			'train',
+			val_split,
+			k_folds
 			)
 
 		# import images (volumes) and maps from dicom. 
-		self.images, self.maps, self.patients = get_imgs_maps(
-			self,
-			self.images_list, 
-			self.maps_list, 
-			self.patients_list, 
-			im_size
+		images, maps, patients = get_imgs_maps(
+			images_list, 
+			maps_list, 
+			patients_list, 
+			im_size, img_directory, map_type
 		)
+		mean = 0
+		total_items = 0
+		for this_image in tqdm(images):
+			this_image = torch.load(this_image)
+			total_items += this_image.numel()
+			mean += torch.sum(this_image)
 
+		mean /= total_items
+		print("Average: ", mean)
+		std = 0
+		for this_image in tqdm(images):
+			this_image = torch.load(this_image)
+			std += torch.sum((this_image - mean)**2)
+		std /= total_items
+		std = torch.sqrt(std)
+		print("Std: ", std)
+
+		train_dataset = BrainDataset_internal(images, maps, patients, mean, std)
+		images_list, maps_list, patients_list = split_data_cv(
+			(
+				data["images"], 
+				data["maps"][map_type], 
+				data["patients"]), 
+			'val',
+			val_split,
+			k_folds
+			)
+
+		# import images (volumes) and maps from dicom. 
+		images, maps, patients = get_imgs_maps(
+			images_list, 
+			maps_list, 
+			patients_list, 
+			im_size, img_directory, map_type
+		)
+		val_dataset = BrainDataset_internal(images, maps, patients, mean, std)
+
+		images_list, maps_list, patients_list = split_data_cv(
+			(
+				data["images"], 
+				data["maps"][map_type], 
+				data["patients"]), 
+			'test',
+			val_split,
+			k_folds
+			)
+
+		# import images (volumes) and maps from dicom. 
+		images, maps, patients = get_imgs_maps(
+			images_list, 
+			maps_list, 
+			patients_list, 
+			im_size, img_directory, map_type
+		)
+		test_dataset = BrainDataset_internal(images, maps, patients, mean, std)
+
+		return train_dataset, val_dataset, test_dataset
+
+class BrainDataset_internal(Dataset):
+	def __init__(
+		self, 
+		images, 
+		maps, 
+		patients, 
+		mean, 
+		std
+		):
+		super(BrainDataset_internal, self).__init__()
+		self.images = images
+		self.maps = maps
+		self.patients = patients 
+		self.mean = mean
+		self.std = std
 
 	def __getitem__(self, index): # RETURN ONE ITEM ON THE INDEX
 		#self.images[index] = remove_noise(self.images[index])
 		# standardization of volumes with mean and var; normalization of maps btw 0 and 1
 		this_img = torch.load(self.images[index])
 		this_mp = torch.load(self.maps[index])
-		this_img = standardization(this_img) #standardization
-		this_img = normalization(this_img) #standardization
+		this_img = (this_img - self.mean) / self.std#standardization(this_img) #standardization
+		#this_img = normalization(this_img) #standardization
 
 		return this_img, this_mp, self.patients[index]
 
 	def __len__(self): # RETURN THE DATA LENGTH
 		return len(self.images)
-
-
-
-def geom_transform(self):
-	t = [T.Resize((self.resize_dim, self.resize_dim))]
-	
-	#if self.dataset_type=='train':
-	#	t+=[
-	#		T.RandomHorizontalFlip(0.3),
-	#		T.RandomVerticalFlip(0.3),
-	#		T.RandomRotation(15)
-	#		]
-	return T.Compose(t)

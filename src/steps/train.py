@@ -74,18 +74,17 @@ def train_step(args, model, train_loader, loss_criterion, optimizer, device, epo
             #outputs = torch.max(outputs, dim=-1)
 
             if (epoch%10 == 0 or epoch==0) and i%10==0:
-                if args.rank <= 0:
-                    with torch.no_grad():
-                        for k in range(batch_dim):
-                            plt_map(
-                                args, target[k, 0].cpu(), 
-                                outputs[k, 0].cpu(), 
-                                "train", 
-                                f"{p[0]}", 
-                                epoch, 
-                                k,
-                                fold
-                            )
+                with torch.no_grad():
+                    for k in range(batch_dim):
+                        plt_map(
+                            args, target[k, 0].cpu(), 
+                            outputs[k, 0].cpu(), 
+                            "train", 
+                            f"{p[0]}", 
+                            epoch, 
+                            k,
+                            fold
+                        )
 
             loss = loss_criterion(outputs, target)
             loss.backward()
@@ -108,8 +107,7 @@ def train_step(args, model, train_loader, loss_criterion, optimizer, device, epo
     psnr_out = tot_psnr/n_batch
     cos_out = tot_cosine/n_batch
 
-    if args.rank <= 0:
-        print('Epoch {} Train Loss: {}'.format(epoch, round(loss_out, 4)))
+    print('Epoch {} Train Loss: {}'.format(epoch, round(loss_out, 4)))
 
     return loss_out, psnr_out, cos_out
 
